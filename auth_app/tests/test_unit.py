@@ -56,13 +56,13 @@ class AuthTests(TestCase):
         token = str(refresh.access_token)
         
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
-        response = self.client.get('/api/organisations')
+        response = self.client.get('/api/organisations/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         # Wait for token to expire
         time.sleep(2)
         
-        response = self.client.get('/api/organisations')
+        response = self.client.get('/api/organisations/')
         print(response)
         self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
 
@@ -81,7 +81,7 @@ class OrganisationTests(TestCase):
     def test_user_can_only_see_own_organisations(self):
         refresh = RefreshToken.for_user(self.user1)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
-        response = self.client.get('/api/organisations')
+        response = self.client.get('/api/organisations/')
         # print(response.data)  # Add this line to see the actual response structure
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['data']), 1)  # Adjust this line based on the actual response structure
