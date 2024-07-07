@@ -100,7 +100,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'user_authentication.wsgi.application'
+WSGI_APPLICATION = 'user_authentication/user_authentication.wsgi.application'
 
 
 # Database
