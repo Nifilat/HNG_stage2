@@ -51,19 +51,22 @@ class AuthTests(TestCase):
         refresh = RefreshToken.for_user(user)
         
         # Set token expiration to 1 second from now for testing purposes
-        refresh.access_token.set_exp(lifetime=timedelta(seconds=1))
+        refresh.access_token.set_exp(lifetime=timedelta(seconds=100))
         
         token = str(refresh.access_token)
+        print(f"Token: {token}")
         
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
         response = self.client.get('/api/organisations/')
+        print(f"Initial response status: {response.status_code}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         # Wait for token to expire
         time.sleep(2)
         
         response = self.client.get('/api/organisations/')
-        print(response)
+        print(f"Post-expiration response status: {response.status_code}")
+
         self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
 
 
@@ -80,6 +83,7 @@ class OrganisationTests(TestCase):
 
     def test_user_can_only_see_own_organisations(self):
         refresh = RefreshToken.for_user(self.user1)
+        
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
         response = self.client.get('/api/organisations/')
         # print(response.data)  # Add this line to see the actual response structure

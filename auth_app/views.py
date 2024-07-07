@@ -1,4 +1,6 @@
 from rest_framework import status, viewsets, mixins
+from rest_framework.viewsets import ViewSet
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -133,28 +135,56 @@ class UserDetailView(APIView):
 #             "message": "Organisation or User not found"
 #         }, status=status.HTTP_404_NOT_FOUND)
 
-class OrganisationViewSet(mixins.CreateModelMixin,
-                          mixins.RetrieveModelMixin,
-                          mixins.UpdateModelMixin,
-                          mixins.DestroyModelMixin,
-                          viewsets.GenericViewSet):
-    queryset = Organisation.objects.all()
-    serializer_class = OrganisationSerializer
+class OrganisationViewSet(ViewSet, ListModelMixin, RetrieveModelMixin, CreateModelMixin):
     permission_classes = [IsAuthenticated]
+    serializer_class = OrganisationSerializer
 
     def get_queryset(self):
-        # Return only the organisations the current user is part of
         return self.request.user.organisations.all()
 
-    def perform_create(self, serializer):
-        organisation = serializer.save()
-        organisation.users.add(self.request.user)
+    def list(self, request):
+        return Response({
+            "status": "success",
+            "message": "Organisations retrieved",
+            "data": self.serializer_class(self.get_queryset(), many=True).data
+        }, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'])
-    def add_user(self, request, orgId):
+    def retrieve(self, request, pk=None):
+        organisation = Organisation.objects.filter(orgId=pk, users=request.user).first()
+        if organisation:
+            return Response({
+                "status": "success",
+                "message": "Organisation record retrieved",
+                "data": self.serializer_class(organisation).data
+            }, status=status.HTTP_200_OK)
+        return Response({
+            "status": "Bad request",
+            "message": "Organisation not found"
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    def create(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            organisation = serializer.save()
+            organisation.users.add(request.user)
+            return Response({
+                "status": "success",
+                "message": "Organisation created successfully",
+                "data": self.serializer_class(organisation).data
+            }, status=status.HTTP_201_CREATED)
+        return Response({
+            "status": "Bad request",
+            "message": "Client error",
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AddUserToOrganisationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, orgId):
         userId = request.data.get('userId')
-        organisation = self.get_object()
-        
+        organisation = Organisation.objects.filter(orgId=orgId, users=request.user).first()
         if organisation:
             user = User.objects.filter(userId=userId).first()
             if user:
@@ -163,9 +193,8 @@ class OrganisationViewSet(mixins.CreateModelMixin,
                     "status": "success",
                     "message": "User added to organisation successfully"
                 }, status=status.HTTP_200_OK)
-        
         return Response({
             "status": "Bad request",
-            "message": "User or organisation not found"
+            "message": "Organisation or User not found"
         }, status=status.HTTP_404_NOT_FOUND)
 
