@@ -3,6 +3,11 @@
     {
       "src": "vercel_app.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "collect_static.sh",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "staticfiles_build" }
     }
   ],
   "routes": [
