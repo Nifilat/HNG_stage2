@@ -80,14 +80,21 @@ class OrganisationViewSet(ViewSet, ListModelMixin, RetrieveModelMixin, CreateMod
     serializer_class = OrganisationSerializer
 
     def get_queryset(self):
-        return self.request.user.organisations.all()
-
-    def list(self, request):
-        return Response({
-            "status": "success",
-            "message": "Organisations retrieved",
-            "data": self.serializer_class(organisations, many=True).data
-        }, status=status.HTTP_200_OK)
+        user = self.request.user
+        
+        return Organisation.objects.filter(users=user)
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        data = {
+            'status': 'success',
+            'message': 'Fetched all organisations successfully',
+            'data': {
+                'organisations': serializer.data
+            }
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
         organisation = Organisation.objects.filter(orgId=pk, users=request.user).first()
