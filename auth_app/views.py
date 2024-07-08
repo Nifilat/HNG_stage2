@@ -88,7 +88,9 @@ class OrganisationViewSet(viewsets.GenericViewSet, ListModelMixin, RetrieveModel
         return Response({
             "status": "success",
             "message": "Fetched all organisations successfully",
-            "data": serializer.data
+            "data": {
+            "organisations": serializer.data
+        }
         }, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
