@@ -15,7 +15,7 @@ class RegisterView(APIView):
     serializer_class = RegisterSerializer
 
     def post(self, request):
-        serializer = self.get_serializer(data=request.data)
+        serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             org = Organisation.objects.create(
