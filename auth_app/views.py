@@ -2,6 +2,7 @@ from rest_framework import status, viewsets, mixins
 from rest_framework.viewsets import ViewSet
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
 from rest_framework.views import APIView
+from django.http import Http404
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
