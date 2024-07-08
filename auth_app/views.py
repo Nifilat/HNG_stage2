@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.generics import get_object_or_404
 from .models import User, Organisation
 from .serializers import RegisterSerializer, UserSerializer, OrganisationSerializer
 from django.contrib.auth import authenticate
@@ -93,19 +94,19 @@ class OrganisationViewSet(viewsets.GenericViewSet, ListModelMixin, RetrieveModel
         }
         }, status=status.HTTP_200_OK)
 
-    def retrieve(self, request, pk=None):
-        organisation = Organisation.objects.filter(orgId=pk, users=request.user).first()
-        if organisation:
-            serializer = self.get_serializer(organisation)
-            return Response({
-                "status": "success",
-                "message": "Organisation record retrieved",
-                "data": serializer.data
-            }, status=status.HTTP_200_OK)
-        return Response({
-            "status": "Bad request",
-            "message": "Organisation not found"
-        }, status=status.HTTP_404_NOT_FOUND)
+    # def retrieve(self, request, pk=None):
+    #     organisation = Organisation.objects.filter(orgId=pk, users=request.user).first()
+    #     if organisation:
+    #         serializer = self.get_serializer(organisation)
+    #         return Response({
+    #             "status": "success",
+    #             "message": "Organisation record retrieved",
+    #             "data": serializer.data
+    #         }, status=status.HTTP_200_OK)
+    #     return Response({
+    #         "status": "Bad request",
+    #         "message": "Organisation not found"
+    #     }, status=status.HTTP_404_NOT_FOUND)
 
     def create(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -124,13 +125,17 @@ class OrganisationViewSet(viewsets.GenericViewSet, ListModelMixin, RetrieveModel
         }, status=status.HTTP_400_BAD_REQUEST)
 
 class OrganisationDetailView(APIView):
-    queryset = Organisation.objects.all()
-    serializer_class = OrganisationSerializer
     permission_classes = [IsAuthenticated]
-    
 
-    def get(self, request, *args, **kwargs):
-        org = self.get_object()
+    def get(self, request, orgId):
+        try:
+            org = get_object_or_404(Organisation, orgId=orgId)
+        except Http404:
+            return Response({
+                'status': 'error',
+                'message': 'Organisation not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
         if request.user in org.users.all():
             data = {
                 'status': 'success',
@@ -139,7 +144,11 @@ class OrganisationDetailView(APIView):
             }
             return Response(data, status=status.HTTP_200_OK)
         else:
-            return Response({'status': 'Forbidden', 'message': 'You do not have access to this organisation'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({
+                'status': 'Forbidden',
+                'message': 'You do not have access to this organisation'
+            }, status=status.HTTP_403_FORBIDDEN)
+    
 
 
 class AddUserToOrganisationView(APIView):
@@ -148,16 +157,35 @@ class AddUserToOrganisationView(APIView):
     def post(self, request, orgId):
         userId = request.data.get('userId')
         organisation = Organisation.objects.filter(orgId=orgId, users=request.user).first()
-        if organisation:
-            user = User.objects.filter(userId=userId).first()
-            if user:
-                organisation.users.add(user)
-                return Response({
-                    "status": "success",
-                    "message": "User added to organisation successfully"
-                }, status=status.HTTP_200_OK)
-        return Response({
-            "status": "Bad request",
-            "message": "Organisation or User not found"
-        }, status=status.HTTP_404_NOT_FOUND)
+        try:
+            if not organisation:
+                raise Organisation.DoesNotExist
+
+            user = User.objects.get(userId=userId)
+            if not user:
+                raise User.DoesNotExist
+
+            organisation.users.add(user)
+            return Response({
+                "status": "success",
+                "message": "User added to organisation successfully"
+            }, status=status.HTTP_200_OK)
+
+        except Organisation.DoesNotExist:
+            return Response({
+                "status": "Not Found",
+                "message": "Organisation not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        except User.DoesNotExist:
+            return Response({
+                "status": "Not Found",
+                "message": "User not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({
+                "status": "Error",
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
