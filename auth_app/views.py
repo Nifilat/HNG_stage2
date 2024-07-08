@@ -7,12 +7,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Organisation
-from .serializers import UserSerializer, OrganisationSerializer
+from .serializers import RegisterSerializer, UserSerializer, OrganisationSerializer
 from django.contrib.auth import authenticate
 
 class RegisterView(APIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             org = Organisation.objects.create(
@@ -32,7 +35,7 @@ class RegisterView(APIView):
             "status": "Bad request",
             "message": "Registration unsuccessful",
             "errors": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+        }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 class LoginView(APIView):
     def post(self, request):
@@ -83,7 +86,7 @@ class OrganisationViewSet(ViewSet, ListModelMixin, RetrieveModelMixin, CreateMod
         return Response({
             "status": "success",
             "message": "Organisations retrieved",
-            "data": self.serializer_class(self.get_queryset(), many=True).data
+            "data": self.serializer_class(organisations, many=True).data
         }, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
@@ -114,6 +117,24 @@ class OrganisationViewSet(ViewSet, ListModelMixin, RetrieveModelMixin, CreateMod
             "message": "Client error",
             "errors": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+
+class OrganisationDetailView(APIView):
+    queryset = Organisation.objects.all()
+    serializer_class = OrganisationSerializer
+    permission_classes = [IsAuthenticated]
+    
+
+    def get(self, request, *args, **kwargs):
+        org = self.get_object()
+        if request.user in org.users.all():
+            data = {
+                'status': 'success',
+                'message': 'Organisation details retrieved successfully',
+                'data': OrganisationSerializer(org).data
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        else:
+            return Response({'status': 'Forbidden', 'message': 'You do not have access to this organisation'}, status=status.HTTP_403_FORBIDDEN)
 
 
 class AddUserToOrganisationView(APIView):

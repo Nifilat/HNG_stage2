@@ -118,12 +118,7 @@ DATABASES = {
     }
 }
 
-print("Database settings:")
-print("HOST:", os.environ.get('DB_HOST', 'localhost'))
-print("PORT:", os.getenv('DB_PORT', '5432'))
-print("NAME:", os.getenv('DB_NAME'))
-print("USER:", os.getenv('DB_USER'))
-print("PASSWORD:", os.getenv('DB_PASSWORD'))
+
 
 
 

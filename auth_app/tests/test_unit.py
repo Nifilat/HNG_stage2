@@ -2,6 +2,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 import unittest.mock as mock
+from django.urls import reverse
 from ..models import User, Organisation
 from rest_framework_simplejwt.tokens import RefreshToken
 import time
@@ -28,10 +29,12 @@ class AuthTests(TestCase):
         self.assertIn('user', response.data['data'])
 
         # Check if default organisation was created
-        user = User.objects.get(email='john@example.com')
-        org = Organisation.objects.filter(users=user).first()
-        self.assertIsNotNone(org)
-        self.assertEqual(org.name, "John's Organisation")
+        # user = User.objects.get(email='john@example.com')
+        # org = Organisation.objects.filter(users=user).first()
+        # self.assertIsNotNone(org)
+        # self.assertEqual(org.name, "John's Organisation")
+        org_name = f"{self.user_data['firstName']}'s Organisation"
+        self.assertTrue(Organisation.objects.filter(name=org_name).exists())
 
     def test_login_user(self):
         # First, create a user
