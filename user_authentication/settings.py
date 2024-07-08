@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.vercel.app', '127.0.0.1']
+ALLOWED_HOSTS = ['https://hng-be-stage2.vercel.app/', '127.0.0.1']
 
 
 # Application definition
@@ -54,8 +54,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(seconds=100),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=2),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=5),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
@@ -112,10 +112,19 @@ DATABASES = {
         'NAME': os.getenv('DB_NAME'),
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '5432'),
+        'SSL_MODE': 'require'
     }
 }
+
+print("Database settings:")
+print("HOST:", os.environ.get('DB_HOST', 'localhost'))
+print("PORT:", os.getenv('DB_PORT', '5432'))
+print("NAME:", os.getenv('DB_NAME'))
+print("USER:", os.getenv('DB_USER'))
+print("PASSWORD:", os.getenv('DB_PASSWORD'))
+
 
 
 # Password validation

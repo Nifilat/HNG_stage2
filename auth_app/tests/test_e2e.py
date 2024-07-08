@@ -28,15 +28,20 @@ class RegisterEndpointTests(TestCase):
         self.assertIsNotNone(org)
         self.assertEqual(org.name, "John's Organisation")
 
+
     def test_missing_required_fields(self):
-        data = {
-            "lastName": "Doe",
-            "email": "john@example.com",
-            "password": "strongpassword",
-        }
-        response = self.client.post('/auth/register', data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('firstName', response.data['errors'])
+        required_fields = ['firstName', 'lastName', 'email', 'password']
+        for field in required_fields:
+            data = {
+                "firstName": "John",
+                "lastName": "Doe",
+                "email": "john@example.com",
+                "password": "strongpassword",
+            }
+            data.pop(field)
+            response = self.client.post('/auth/register', data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+            self.assertIn(field, response.data['errors'])
 
     def test_duplicate_email(self):
         User.objects.create_user(email='john@example.com', password='password', firstName='John', lastName='Doe')
@@ -47,7 +52,7 @@ class RegisterEndpointTests(TestCase):
             "password": "strongpassword",
         }
         response = self.client.post('/auth/register', data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertIn('email', response.data['errors'])
 
     def test_successful_login(self):
@@ -72,5 +77,5 @@ class RegisterEndpointTests(TestCase):
         }
         response = self.client.post('/auth/login', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data['status'], 'Bad request')
-        self.assertEqual(response.data['message'], 'Authentication failed')
+        self.assertEqual(response.data['status'], 'error')
+        self.assertEqual(response.data['message'], 'Invalid credentials')

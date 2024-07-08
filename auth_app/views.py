@@ -70,70 +70,7 @@ class UserDetailView(APIView):
             "message": "User not found"
         }, status=status.HTTP_404_NOT_FOUND)
 
-# class OrganisationListView(APIView):
-#     permission_classes = [IsAuthenticated]
 
-#     def get(self, request):
-#         organisations = request.user.organisations.all()
-#         return Response({
-#             "status": "success",
-#             "message": "Organisations retrieved",
-#             "data": OrganisationSerializer(organisations, many=True).data
-#         }, status=status.HTTP_200_OK)
-
-# class OrganisationDetailView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request, orgId):
-#         organisation = Organisation.objects.filter(orgId=orgId, users=request.user).first()
-#         if organisation:
-#             return Response({
-#                 "status": "success",
-#                 "message": "Organisation record retrieved",
-#                 "data": OrganisationSerializer(organisation).data
-#             }, status=status.HTTP_200_OK)
-#         return Response({
-#             "status": "Bad request",
-#             "message": "Organisation not found"
-#         }, status=status.HTTP_404_NOT_FOUND)
-
-# class CreateOrganisationView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request):
-#         serializer = OrganisationSerializer(data=request.data)
-#         if serializer.is_valid():
-#             organisation = serializer.save()
-#             organisation.users.add(request.user)
-#             return Response({
-#                 "status": "success",
-#                 "message": "Organisation created successfully",
-#                 "data": OrganisationSerializer(organisation).data
-#             }, status=status.HTTP_201_CREATED)
-#         return Response({
-#             "status": "Bad request",
-#             "message": "Client error",
-#             "errors": serializer.errors
-#         }, status=status.HTTP_400_BAD_REQUEST)
-
-# class AddUserToOrganisationView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request, orgId):
-#         userId = request.data.get('userId')
-#         organisation = Organisation.objects.filter(orgId=orgId, users=request.user).first()
-#         if organisation:
-#             user = User.objects.filter(userId=userId).first()
-#             if user:
-#                 organisation.users.add(user)
-#                 return Response({
-#                     "status": "success",
-#                     "message": "User added to organisation successfully"
-#                 }, status=status.HTTP_200_OK)
-#         return Response({
-#             "status": "Bad request",
-#             "message": "Organisation or User not found"
-#         }, status=status.HTTP_404_NOT_FOUND)
 
 class OrganisationViewSet(ViewSet, ListModelMixin, RetrieveModelMixin, CreateModelMixin):
     permission_classes = [IsAuthenticated]
