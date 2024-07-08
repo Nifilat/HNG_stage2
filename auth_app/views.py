@@ -75,34 +75,30 @@ class UserDetailView(APIView):
 
 
 
-class OrganisationViewSet(ViewSet, ListModelMixin, RetrieveModelMixin, CreateModelMixin):
+class OrganisationViewSet(viewsets.GenericViewSet, ListModelMixin, RetrieveModelMixin, CreateModelMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = OrganisationSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        
-        return Organisation.objects.filter(users=user)
-    
+        return Organisation.objects.filter(users=self.request.user)
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-        data = {
-            'status': 'success',
-            'message': 'Fetched all organisations successfully',
-            'data': {
-                'organisations': serializer.data
-            }
-        }
-        return Response(data, status=status.HTTP_200_OK)
+        return Response({
+            "status": "success",
+            "message": "Fetched all organisations successfully",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
         organisation = Organisation.objects.filter(orgId=pk, users=request.user).first()
         if organisation:
+            serializer = self.get_serializer(organisation)
             return Response({
                 "status": "success",
                 "message": "Organisation record retrieved",
-                "data": self.serializer_class(organisation).data
+                "data": serializer.data
             }, status=status.HTTP_200_OK)
         return Response({
             "status": "Bad request",
@@ -110,14 +106,14 @@ class OrganisationViewSet(ViewSet, ListModelMixin, RetrieveModelMixin, CreateMod
         }, status=status.HTTP_404_NOT_FOUND)
 
     def create(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             organisation = serializer.save()
             organisation.users.add(request.user)
             return Response({
                 "status": "success",
                 "message": "Organisation created successfully",
-                "data": self.serializer_class(organisation).data
+                "data": serializer.data
             }, status=status.HTTP_201_CREATED)
         return Response({
             "status": "Bad request",
