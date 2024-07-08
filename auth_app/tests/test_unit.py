@@ -15,12 +15,12 @@ class AuthTests(TestCase):
 
     def test_register_user(self):
         data = {
-            "firstName": "John",
-            "lastName": "Doe",
-            "email": "john@example.com",
-            "password": "strongpassword",
-            "phone": "1234567890"
-        }
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "john@example.com",
+        "password": "strongpassword",
+        "phone": "1234567890"
+    }
         response = self.client.post('/auth/register', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['status'], 'success')
@@ -28,15 +28,12 @@ class AuthTests(TestCase):
         self.assertIn('accessToken', response.data['data'])
         self.assertIn('user', response.data['data'])
 
-        # Check if default organisation was created
-        # user = User.objects.get(email='john@example.com')
-        # org = Organisation.objects.filter(users=user).first()
-        # self.assertIsNotNone(org)
-        # self.assertEqual(org.name, "John's Organisation")
-        org_name = f"{self.user_data['firstName']}'s Organisation"
+        org_name = f"{data['firstName']}'s Organisation"
         self.assertTrue(Organisation.objects.filter(name=org_name).exists())
 
+
     def test_login_user(self):
+        
         # First, create a user
         user = User.objects.create_user(email='jane@example.com', password='strongpassword', firstName='Jane', lastName='Doe')
         
@@ -55,29 +52,25 @@ class AuthTests(TestCase):
     def test_token_expiration(self):
         user = User.objects.create_user(email='test@example.com', phone="08028151196", password='testpassword', firstName='Test', lastName='User')
         refresh = RefreshToken.for_user(user)
-    
-    # Set token expiration to 1 second from now for testing purposes
+
         refresh.access_token.set_exp(lifetime=timedelta(seconds=1))
-    
+
         token = str(refresh.access_token)
-        
-    
-    # Mock the API response
+
         mock_response = mock.Mock(status_code=status.HTTP_200_OK)
-        with mock.patch('rest_framework.test.client.get', return_value=mock_response):
+        with mock.patch('rest_framework.test.APIClient.get', return_value=mock_response):
             self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
             response = self.client.get('/api/organisations/')
             print(f"Initial response status: {response.status_code}")
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        # Wait for token to expire
+
             time.sleep(2)
-        
-        # Mock the API response with a 401 or 403 status code
+
             mock_response.status_code = status.HTTP_401_UNAUTHORIZED
             response = self.client.get('/api/organisations/')
             print(f"Post-expiration response status: {response.status_code}")
             self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+
 
 
 
@@ -93,21 +86,29 @@ class OrganisationTests(TestCase):
 
     def test_user_can_only_see_own_organisations(self):
         refresh = RefreshToken.for_user(self.user1)
-        
+    
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
         response = self.client.get('/api/organisations/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['data']), 1)  
-        self.assertEqual(response.data['data'][0]['name'], "User One's Organisation")  
-        self.assertEqual(response.data['data'][0]['description'], "First Organisation")  
+    
+        self.assertEqual(response.data['status'], 'success')
+        self.assertIn('message', response.data)
+        self.assertIn('data', response.data)
+        self.assertIn('organisations', response.data['data'])
+        organisations = response.data['data']['organisations']
+    
+        self.assertEqual(len(organisations), 1)
+        self.assertEqual(organisations[0]['name'], "User One's Organisation")
+        self.assertEqual(organisations[0]['description'], "First Organisation")
 
-        # Ensure user1 can't see user2's organisation
-        self.assertNotIn("User Two's Organisation", [org['name'] for org in response.data['data']])
+    # Ensure user1 can't see user2's organisation
+        self.assertNotIn("User Two's Organisation", [org['name'] for org in organisations])
+
 
     def test_user_cannot_access_other_users_organisations(self):
         refresh = RefreshToken.for_user(self.user1)
         
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
-        response = self.client.get(f'/api/organisations/{self.org2.id}/')
+        response = self.client.get(f'/api/organisations/{self.org2.orgId}/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 

@@ -70,11 +70,12 @@ class RegisterEndpointTests(TestCase):
         self.assertIn('accessToken', response.data['data'])
         self.assertIn('user', response.data['data'])
 
+    
     def test_failed_login(self):
         data = {
-            "email": "nonexistent@example.com",
+            "email": "invalid@example.com",
             "password": "wrongpassword"
-        }
+            }
         response = self.client.post('/auth/login', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data['status'], 'error')
