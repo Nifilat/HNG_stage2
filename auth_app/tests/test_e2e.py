@@ -80,4 +80,4 @@ class RegisterEndpointTests(TestCase):
         print(response.data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data['status'], 'Unauthorized')
-        self.assertEqual(response.data['message'], 'Invalid credentials')
+        self.assertEqual(response.data['message'], 'Authentication failed')
