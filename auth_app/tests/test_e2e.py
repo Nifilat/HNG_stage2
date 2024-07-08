@@ -77,6 +77,7 @@ class RegisterEndpointTests(TestCase):
             "password": "wrongpassword"
             }
         response = self.client.post('/auth/login', data, format='json')
+        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data['status'], 'error')
+        self.assertEqual(response.data['status'], 'Unauthorized')
         self.assertEqual(response.data['message'], 'Invalid credentials')

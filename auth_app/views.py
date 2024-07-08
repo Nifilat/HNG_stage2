@@ -55,7 +55,7 @@ class LoginView(APIView):
                 }
             }, status=status.HTTP_200_OK)
         return Response({
-            "status": "Bad request",
+            "status": "Unauthorized",
             "message": "Authentication failed"
         }, status=status.HTTP_401_UNAUTHORIZED)
 
