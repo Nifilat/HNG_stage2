@@ -29,12 +29,15 @@ class AuthTests(TestCase):
         self.assertIn('user', response.data['data'])
 
         org_name = f"{data['firstName']}'s Organisation"
+        default_org = Organisation.objects.filter(name=org_name).first()
+        print(f"Default Organisation: {default_org.name}")
+        self.assertIsNotNone(default_org)
         self.assertTrue(Organisation.objects.filter(name=org_name).exists())
 
 
     def test_login_user(self):
         
-        # First, create a user
+        
         user = User.objects.create_user(email='jane@example.com', password='strongpassword', firstName='Jane', lastName='Doe')
         
         data = {
@@ -68,7 +71,6 @@ class AuthTests(TestCase):
 
             mock_response.status_code = status.HTTP_401_UNAUTHORIZED
             response = self.client.get('/api/organisations/')
-            print(f"Post-expiration response status: {response.status_code}")
             self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
 
 
@@ -77,11 +79,11 @@ class AuthTests(TestCase):
 class OrganisationTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user1 = User.objects.create_user(email='user1@example.com', password='password', firstName='User', lastName='One')
-        self.user2 = User.objects.create_user(email='user2@example.com', password='password', firstName='User', lastName='Two')
-        self.org1 = Organisation.objects.create(name="User One's Organisation", description="First Organisation")
+        self.user1 = User.objects.create_user(email='user1@example.com', password='password', firstName='Tom', lastName='One')
+        self.user2 = User.objects.create_user(email='user2@example.com', password='password', firstName='Mike', lastName='Two')
+        self.org1 = Organisation.objects.create(name=f"{self.user1.firstName}'s Organisation", description="First Organisation")
         self.org1.users.add(self.user1)
-        self.org2 = Organisation.objects.create(name="User Two's Organisation", description="Second Organisation")
+        self.org2 = Organisation.objects.create(name=f"{self.user2.firstName}'s Organisation", description="Second Organisation")
         self.org2.users.add(self.user2)
 
     def test_user_can_only_see_own_organisations(self):
@@ -89,6 +91,7 @@ class OrganisationTests(TestCase):
     
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
         response = self.client.get('/api/organisations/')
+        print(f"Response data: {response.data}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
     
         self.assertEqual(response.data['status'], 'success')
@@ -98,11 +101,11 @@ class OrganisationTests(TestCase):
         organisations = response.data['data']['organisations']
     
         self.assertEqual(len(organisations), 1)
-        self.assertEqual(organisations[0]['name'], "User One's Organisation")
+        self.assertEqual(organisations[0]['name'], f"{self.user1.firstName}'s Organisation")
         self.assertEqual(organisations[0]['description'], "First Organisation")
 
     # Ensure user1 can't see user2's organisation
-        self.assertNotIn("User Two's Organisation", [org['name'] for org in organisations])
+        self.assertNotIn(f"{self.user2.firstName}'s Organisation", [org['name'] for org in organisations])
 
 
     def test_user_cannot_access_other_users_organisations(self):
