@@ -13,5 +13,6 @@ urlpatterns = [
     # path('api/organisations', OrganisationListView.as_view()),
     path('api/organisations/<uuid:orgId>', OrganisationDetailView.as_view()),
     # path('api/organisations', CreateOrganisationView.as_view()),
-    path('api/organisations/<uuid:orgId>/users', AddUserToOrganisationView.as_view()),
+    path('api/organisations/<uuid:orgId>/users',
+         AddUserToOrganisationView.as_view()),
 ]

@@ -12,6 +12,7 @@ from .models import User, Organisation
 from .serializers import RegisterSerializer, UserSerializer, OrganisationSerializer
 from django.contrib.auth import authenticate
 
+
 class RegisterView(APIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -39,6 +40,7 @@ class RegisterView(APIView):
             "errors": serializer.errors
         }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
+
 class LoginView(APIView):
     def post(self, request):
         email = request.data.get('email')
@@ -59,11 +61,13 @@ class LoginView(APIView):
             "message": "Authentication failed"
         }, status=status.HTTP_401_UNAUTHORIZED)
 
+
 class UserDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, id):
-        user = User.objects.filter(userId=id, organisations__in=request.user.organisations.all()).first()
+        user = User.objects.filter(
+            userId=id, organisations__in=request.user.organisations.all()).first()
         if user:
             return Response({
                 "status": "success",
@@ -74,7 +78,6 @@ class UserDetailView(APIView):
             "status": "Bad request",
             "message": "User not found"
         }, status=status.HTTP_404_NOT_FOUND)
-
 
 
 class OrganisationViewSet(viewsets.GenericViewSet, ListModelMixin, RetrieveModelMixin, CreateModelMixin):
@@ -91,8 +94,8 @@ class OrganisationViewSet(viewsets.GenericViewSet, ListModelMixin, RetrieveModel
             "status": "success",
             "message": "Fetched all organisations successfully",
             "data": {
-            "organisations": serializer.data
-        }
+                "organisations": serializer.data
+            }
         }, status=status.HTTP_200_OK)
 
     # def retrieve(self, request, pk=None):
@@ -125,6 +128,7 @@ class OrganisationViewSet(viewsets.GenericViewSet, ListModelMixin, RetrieveModel
             "errors": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
+
 class OrganisationDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -136,7 +140,7 @@ class OrganisationDetailView(APIView):
                 'status': 'error',
                 'message': 'Organisation not found'
             }, status=status.HTTP_404_NOT_FOUND)
-        
+
         if request.user in org.users.all():
             data = {
                 'status': 'success',
@@ -149,7 +153,6 @@ class OrganisationDetailView(APIView):
                 'status': 'Forbidden',
                 'message': 'You do not have access to this organisation'
             }, status=status.HTTP_403_FORBIDDEN)
-    
 
 
 class AddUserToOrganisationView(APIView):
@@ -157,7 +160,8 @@ class AddUserToOrganisationView(APIView):
 
     def post(self, request, orgId):
         userId = request.data.get('userId')
-        organisation = Organisation.objects.filter(orgId=orgId, users=request.user).first()
+        organisation = Organisation.objects.filter(
+            orgId=orgId, users=request.user).first()
         try:
             if not organisation:
                 raise Organisation.DoesNotExist
@@ -189,4 +193,3 @@ class AddUserToOrganisationView(APIView):
                 "status": "Error",
                 "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-

@@ -3,6 +3,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from ..models import User, Organisation
 
+
 class RegisterEndpointTests(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -28,7 +29,6 @@ class RegisterEndpointTests(TestCase):
         self.assertIsNotNone(org)
         self.assertEqual(org.name, "John's Organisation")
 
-
     def test_missing_required_fields(self):
         required_fields = ['firstName', 'lastName', 'email', 'password']
         for field in required_fields:
@@ -40,11 +40,13 @@ class RegisterEndpointTests(TestCase):
             }
             data.pop(field)
             response = self.client.post('/auth/register', data, format='json')
-            self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+            self.assertEqual(response.status_code,
+                             status.HTTP_422_UNPROCESSABLE_ENTITY)
             self.assertIn(field, response.data['errors'])
 
     def test_duplicate_email(self):
-        User.objects.create_user(email='john@example.com', password='password', firstName='John', lastName='Doe')
+        User.objects.create_user(
+            email='john@example.com', password='password', firstName='John', lastName='Doe')
         data = {
             "firstName": "John",
             "lastName": "Doe",
@@ -52,13 +54,15 @@ class RegisterEndpointTests(TestCase):
             "password": "strongpassword",
         }
         response = self.client.post('/auth/register', data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(response.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertIn('email', response.data['errors'])
 
     def test_successful_login(self):
-        # First, create a user
-        User.objects.create_user(email='jane@example.com', password='strongpassword', firstName='Jane', lastName='Doe')
-        
+
+        User.objects.create_user(
+            email='jane@example.com', password='strongpassword', firstName='Jane', lastName='Doe')
+
         data = {
             "email": "jane@example.com",
             "password": "strongpassword"
@@ -70,12 +74,11 @@ class RegisterEndpointTests(TestCase):
         self.assertIn('accessToken', response.data['data'])
         self.assertIn('user', response.data['data'])
 
-    
     def test_failed_login(self):
         data = {
             "email": "invalid@example.com",
             "password": "wrongpassword"
-            }
+        }
         response = self.client.post('/auth/login', data, format='json')
         print(response.data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
