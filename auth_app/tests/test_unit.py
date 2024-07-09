@@ -91,7 +91,6 @@ class OrganisationTests(TestCase):
     
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
         response = self.client.get('/api/organisations/')
-        print(f"Response data: {response.data}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
     
         self.assertEqual(response.data['status'], 'success')
@@ -110,7 +109,6 @@ class OrganisationTests(TestCase):
 
     def test_user_cannot_access_other_users_organisations(self):
         refresh = RefreshToken.for_user(self.user1)
-        
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
         response = self.client.get(f'/api/organisations/{self.org2.orgId}/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
