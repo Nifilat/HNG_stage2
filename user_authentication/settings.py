@@ -30,6 +30,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+APPEND_SLASH = False
+
 ALLOWED_HOSTS = ['.vercel.app', '127.0.0.1']
 
 
@@ -150,6 +152,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
 
 
 # Static files (CSS, JavaScript, Images)
