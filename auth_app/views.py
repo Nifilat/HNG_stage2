@@ -57,9 +57,9 @@ class LoginView(APIView):
                 }
             }, status=status.HTTP_200_OK)
         return Response({
-            "status": "Unauthorized",
-            "message": "Authentication failed"
-        }, status=status.HTTP_401_UNAUTHORIZED)
+            "status": "Bad request",
+            "message": "Invalid Credentials"
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserDetailView(APIView):
@@ -123,7 +123,7 @@ class OrganisationViewSet(viewsets.GenericViewSet, ListModelMixin, RetrieveModel
                 "data": serializer.data
             }, status=status.HTTP_201_CREATED)
         return Response({
-            "status": "Bad request",
+            "status": "Bad Request",
             "message": "Client error",
             "errors": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
